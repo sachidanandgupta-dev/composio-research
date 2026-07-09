@@ -1,0 +1,58 @@
+[
+  {
+    "app": "Twenty",
+    "first_pass": "API key (Bearer), self-serve, REST+GraphQL auto-generated",
+    "verified_against": "docs.twenty.com/developers/api-and-webhooks/api",
+    "verified_finding": "Confirmed: API key via Settings > API & Webhooks, Bearer auth header, REST + GraphQL both auto-generated from workspace schema, multiple community MCP servers exist.",
+    "result": "hit"
+  },
+  {
+    "app": "DealCloud",
+    "first_pass": "OAuth2, gated behind admin approval, REST API",
+    "verified_against": "api.docs.dealcloud.com",
+    "verified_finding": "Confirmed OAuth2 Client Credentials flow, tokens expire in 900s. Confirmed gated: API access must be explicitly enabled by a site admin under User Management. Bonus finding not in first pass: DealCloud is launching an MCP server in client preview as of July 2026.",
+    "result": "hit, with a detail added"
+  },
+  {
+    "app": "Pylon",
+    "first_pass": "OAuth2, self-serve, REST + MCP",
+    "verified_against": "docs.usepylon.com/pylon-docs/developer/api",
+    "verified_finding": "More nuanced than the first pass: the MCP server uses OAuth and needs a Member/Admin seat, but the separate REST API token can only be created by an Admin - two different access rules for two different surfaces on the same product.",
+    "result": "partial miss - first pass collapsed two distinct auth paths into one"
+  },
+  {
+    "app": "GoHighLevel",
+    "first_pass": "OAuth2, self-serve dev account, REST API",
+    "verified_against": "marketplace.gohighlevel.com/docs",
+    "verified_finding": "Confirmed: OAuth2 Authorization Code flow for public/marketplace apps, or a Private Integration Token for internal-only use - both self-serve from a free developer account.",
+    "result": "hit"
+  },
+  {
+    "app": "Fathom",
+    "first_pass": "No public API found, gated/limited",
+    "verified_against": "developers.fathom.ai",
+    "verified_finding": "Wrong. Fathom shipped a public API (Bearer token, user-scoped, 60 req/min) available to all users, plus multiple community MCP servers. This was a first-pass guess based on Fathom's older reputation as 'no API', not current fact.",
+    "result": "miss - corrected after verification"
+  },
+  {
+    "app": "GitHub",
+    "first_pass": "OAuth2/PAT/GitHub App, self-serve, official MCP server",
+    "verified_against": "general knowledge, high-confidence well-documented platform",
+    "verified_finding": "No live check needed - GitHub's REST/GraphQL API and official MCP server are extremely well documented and stable; used as a control/sanity check rather than a real verification target.",
+    "result": "hit (control)"
+  },
+  {
+    "app": "Consensus",
+    "first_pass": "OAuth requested, gated, limited public API",
+    "verified_against": "docs.consensus.app/docs/mcp, consensus.app/home/api",
+    "verified_finding": "Split finding the first pass missed entirely: the MCP server (mcp.consensus.app) is instant self-serve with automatic OAuth and no account needed for basic queries. It's the separate full REST API that's gated ('available by application only', $0.10/call). First pass called the whole product 'gated' when the agent-relevant path (MCP) is actually open.",
+    "result": "miss - corrected after verification"
+  },
+  {
+    "app": "Waterfall.io",
+    "first_pass": "API key, gated, needs a sales conversation",
+    "verified_against": "www.waterfall.io, docs.getcargo.ai/integration/waterfall",
+    "verified_finding": "Wrong. Waterfall.io hands out an API key immediately on signup, with no long-term contract or upfront payment required, per their own docs. First pass conflated 'enterprise-sounding B2B data vendor' with 'sales-gated', which turned out false here.",
+    "result": "miss - corrected after verification"
+  }
+]

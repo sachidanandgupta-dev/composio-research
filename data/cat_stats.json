@@ -1,0 +1,72 @@
+{
+ "CRM and Sales": {
+  "total": 10,
+  "self_serve": 9,
+  "gated": 1,
+  "mixed": 0,
+  "buildable_yes": 9
+ },
+ "Support and Helpdesk": {
+  "total": 10,
+  "self_serve": 7,
+  "gated": 1,
+  "mixed": 2,
+  "buildable_yes": 9
+ },
+ "Communications and Messaging": {
+  "total": 10,
+  "self_serve": 9,
+  "gated": 1,
+  "mixed": 0,
+  "buildable_yes": 8
+ },
+ "Marketing Ads Email and Social": {
+  "total": 10,
+  "self_serve": 5,
+  "gated": 3,
+  "mixed": 2,
+  "buildable_yes": 5
+ },
+ "Ecommerce": {
+  "total": 10,
+  "self_serve": 6,
+  "gated": 3,
+  "mixed": 1,
+  "buildable_yes": 5
+ },
+ "Data SEO and Scraping": {
+  "total": 10,
+  "self_serve": 8,
+  "gated": 2,
+  "mixed": 0,
+  "buildable_yes": 6
+ },
+ "Developer Infra and Data platforms": {
+  "total": 10,
+  "self_serve": 10,
+  "gated": 0,
+  "mixed": 0,
+  "buildable_yes": 10
+ },
+ "Productivity and Project Management": {
+  "total": 10,
+  "self_serve": 10,
+  "gated": 0,
+  "mixed": 0,
+  "buildable_yes": 10
+ },
+ "Finance and Fintech": {
+  "total": 10,
+  "self_serve": 4,
+  "gated": 5,
+  "mixed": 1,
+  "buildable_yes": 4
+ },
+ "AI Research and Media-native": {
+  "total": 10,
+  "self_serve": 7,
+  "gated": 3,
+  "mixed": 0,
+  "buildable_yes": 6
+ }
+}

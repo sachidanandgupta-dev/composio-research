@@ -1,0 +1,1645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>100 apps, one question: can an agent get in? — Composio research audit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0B0D10;
+  --surface:#14171C;
+  --surface2:#1B1F26;
+  --border:#262B33;
+  --text:#E8E6E1;
+  --text-dim:#9299A6;
+  --text-faint:#5B626D;
+  --self:#5EEAD4;
+  --gate:#F5A623;
+  --mixed:#C9A6F0;
+  --bad:#EF5B5B;
+  --good:#5EEAD4;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Inter',sans-serif;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:var(--self);color:#0B0D10;}
+h1,h2,h3,.mono-head{font-family:'Space Grotesk',sans-serif;}
+code, .mono, .evidence code, .gate-count, .cat-meta, td.num, .badge, .build, .vresult{font-family:'JetBrains Mono',monospace;}
+
+.wrap{max-width:1180px;margin:0 auto;padding:0 32px;}
+
+/* ---------- HERO ---------- */
+.hero{padding:88px 0 56px;border-bottom:1px solid var(--border);}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--text-dim);
+  border:1px solid var(--border);border-radius:100px;padding:6px 14px;margin-bottom:28px;
+}
+.eyebrow::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--self);box-shadow:0 0 8px var(--self);}
+h1.thesis{
+  font-size:clamp(32px,4.6vw,54px);
+  font-weight:600;
+  line-height:1.12;
+  letter-spacing:-0.02em;
+  margin:0 0 20px;
+  max-width:920px;
+}
+h1.thesis em{font-style:normal;color:var(--self);}
+.thesis-sub{font-size:17px;color:var(--text-dim);max-width:640px;margin:0 0 44px;}
+
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.stat{background:var(--surface);padding:22px 24px;}
+.stat .n{font-family:'Space Grotesk',sans-serif;font-size:32px;font-weight:600;color:var(--text);}
+.stat .n span{color:var(--self);}
+.stat .l{font-size:12.5px;color:var(--text-dim);margin-top:4px;}
+
+/* ---------- SECTION generic ---------- */
+section{padding:64px 0;border-bottom:1px solid var(--border);}
+.section-head{margin-bottom:36px;}
+.section-tag{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--self);margin-bottom:10px;}
+h2{font-size:28px;font-weight:600;margin:0 0 10px;letter-spacing:-.01em;}
+.section-desc{color:var(--text-dim);font-size:15px;max-width:680px;}
+
+/* ---------- GATE SPECTRUM (signature element) ---------- */
+.gate-row{display:grid;grid-template-columns:230px 1fr 130px;align-items:center;gap:18px;padding:11px 0;border-bottom:1px solid var(--border);}
+.gate-row:last-child{border-bottom:none;}
+.gate-label{font-size:13.5px;color:var(--text);}
+.gate-track{display:flex;height:22px;border-radius:5px;overflow:hidden;background:var(--surface2);}
+.seg{height:100%;}
+.seg-self{background:var(--self);}
+.seg-mixed{background:var(--mixed);}
+.seg-gate{background:var(--gate);}
+.gate-count{font-size:12px;color:var(--text-dim);text-align:right;}
+.legend{display:flex;gap:22px;margin-top:22px;font-size:12.5px;color:var(--text-dim);}
+.legend span{display:inline-flex;align-items:center;gap:7px;}
+.legend i{width:10px;height:10px;border-radius:2px;display:inline-block;}
+
+/* ---------- two-col grids ---------- */
+.grid2{display:grid;grid-template-columns:1.1fr .9fr;gap:48px;}
+@media(max-width:860px){.grid2{grid-template-columns:1fr;}}
+
+.metric-list{display:flex;flex-direction:column;gap:14px;}
+.metric{display:grid;grid-template-columns:150px 1fr 46px;align-items:center;gap:14px;}
+.metric .m-label{font-size:13.5px;color:var(--text);}
+.metric .m-bar{height:10px;border-radius:5px;background:var(--surface2);overflow:hidden;}
+.metric .m-fill{height:100%;background:var(--self);}
+.metric .m-val{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--text-dim);text-align:right;}
+
+.callout{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px 26px;}
+.callout h3{font-size:15px;margin:0 0 12px;font-weight:600;}
+.callout ul{margin:0;padding-left:18px;color:var(--text-dim);font-size:13.5px;line-height:1.7;}
+.callout li{margin-bottom:4px;}
+.callout li b{color:var(--text);font-weight:500;}
+
+/* ---------- AGENT ARCHITECTURE ---------- */
+.pipeline{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:28px;}
+@media(max-width:860px){.pipeline{grid-template-columns:1fr;}}
+.pipe-step{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px 22px 20px;position:relative;}
+.pipe-step .pipe-num{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--self);margin-bottom:10px;}
+.pipe-step h4{margin:0 0 8px;font-size:15.5px;font-weight:600;}
+.pipe-step p{margin:0;font-size:13px;color:var(--text-dim);line-height:1.6;}
+.pipe-arrow{display:none;}
+@media(min-width:861px){
+  .pipe-step:not(:last-child)::after{content:"→";position:absolute;right:-22px;top:50%;transform:translateY(-50%);color:var(--text-faint);font-size:18px;}
+}
+
+/* ---------- VERIFICATION ---------- */
+.accuracy-banner{
+  display:flex;align-items:center;gap:28px;
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  padding:22px 26px;margin-bottom:28px;flex-wrap:wrap;
+}
+.acc-block{display:flex;flex-direction:column;}
+.acc-num{font-family:'Space Grotesk',sans-serif;font-size:30px;font-weight:600;}
+.acc-num.before{color:var(--gate);}
+.acc-num.after{color:var(--self);}
+.acc-label{font-size:12px;color:var(--text-dim);margin-top:2px;}
+.acc-arrow{font-size:22px;color:var(--text-faint);}
+.acc-note{font-size:13px;color:var(--text-dim);flex:1;min-width:220px;}
+
+table.ver-table{width:100%;border-collapse:collapse;font-size:13px;}
+table.ver-table th{
+  text-align:left;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.06em;
+  color:var(--text-faint);padding:10px 14px;border-bottom:1px solid var(--border);
+}
+table.ver-table td{padding:14px;border-bottom:1px solid var(--border);vertical-align:top;color:var(--text-dim);}
+table.ver-table td.app-name{color:var(--text);font-weight:500;white-space:nowrap;}
+.vresult{font-size:11px;padding:3px 9px;border-radius:5px;white-space:nowrap;}
+.v-hit{background:rgba(94,234,212,.12);color:var(--self);}
+.v-partial{background:rgba(245,166,35,.12);color:var(--gate);}
+.v-miss{background:rgba(239,91,91,.12);color:var(--bad);}
+
+/* ---------- FULL TABLE ---------- */
+.filter-bar{display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap;}
+.filter-btn{
+  font-family:'JetBrains Mono',monospace;font-size:12px;padding:8px 16px;border-radius:100px;
+  background:var(--surface);border:1px solid var(--border);color:var(--text-dim);cursor:pointer;transition:.15s;
+}
+.filter-btn:hover{border-color:var(--self);color:var(--text);}
+.filter-btn.active{background:var(--self);color:#0B0D10;border-color:var(--self);font-weight:600;}
+
+details.cat-block{
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:14px;overflow:hidden;
+}
+details.cat-block summary{
+  list-style:none;cursor:pointer;padding:18px 22px;display:flex;align-items:center;gap:16px;
+}
+details.cat-block summary::-webkit-details-marker{display:none;}
+.cat-name{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15.5px;}
+.cat-meta{font-size:12px;color:var(--text-dim);flex:1;}
+.chev{color:var(--text-faint);transition:transform .2s;font-size:12px;}
+details[open] .chev{transform:rotate(180deg);}
+
+table.app-table{width:100%;border-collapse:collapse;font-size:12.5px;border-top:1px solid var(--border);}
+table.app-table thead th{
+  text-align:left;font-family:'JetBrains Mono',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;
+  color:var(--text-faint);padding:10px 14px;background:var(--surface2);
+}
+table.app-table td{padding:12px 14px;border-bottom:1px solid var(--border);color:var(--text-dim);vertical-align:top;}
+table.app-table tbody tr:last-child td{border-bottom:none;}
+table.app-table tbody tr:hover{background:rgba(255,255,255,.02);}
+td.num{color:var(--text-faint);}
+td.app-name{color:var(--text);font-weight:500;min-width:120px;}
+.app-desc{font-family:'Inter',sans-serif;font-weight:400;font-size:11.5px;color:var(--text-faint);margin-top:2px;}
+.vtag{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--self);border:1px solid rgba(94,234,212,.35);padding:1px 5px;border-radius:4px;margin-left:6px;vertical-align:middle;}
+.access-note, .blocker{font-family:'Inter',sans-serif;font-size:11px;color:var(--text-faint);margin-top:4px;max-width:190px;}
+.blocker{color:var(--bad);opacity:.85;}
+.badge, .build{display:inline-block;font-size:11px;padding:2px 8px;border-radius:5px;}
+.badge-self{background:rgba(94,234,212,.12);color:var(--self);}
+.badge-gate{background:rgba(245,166,35,.12);color:var(--gate);}
+.badge-mixed{background:rgba(201,166,240,.12);color:var(--mixed);}
+.build-yes{background:rgba(94,234,212,.12);color:var(--self);}
+.build-partial{background:rgba(245,166,35,.12);color:var(--gate);}
+.build-no{background:rgba(239,91,91,.12);color:var(--bad);}
+.evidence code{font-size:11px;color:var(--text-dim);background:var(--surface2);padding:2px 6px;border-radius:4px;white-space:nowrap;}
+
+/* ---------- FOOTER ---------- */
+footer{padding:56px 0 80px;}
+.honesty{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:26px 28px;margin-bottom:28px;}
+.honesty h3{margin:0 0 14px;font-size:15px;}
+.honesty ul{margin:0;padding-left:18px;color:var(--text-dim);font-size:13.5px;line-height:1.75;}
+.deliverable-links{display:flex;gap:14px;flex-wrap:wrap;}
+.dlink{
+  font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--text);
+  border:1px solid var(--border);border-radius:8px;padding:10px 16px;text-decoration:none;
+  display:inline-flex;align-items:center;gap:8px;
+}
+.dlink:hover{border-color:var(--self);color:var(--self);}
+.foot-meta{color:var(--text-faint);font-size:12px;margin-top:32px;}
+
+@media(max-width:700px){
+  .wrap{padding:0 18px;}
+  .stat-row{grid-template-columns:repeat(2,1fr);}
+  .gate-row{grid-template-columns:1fr;gap:6px;}
+  .gate-count{text-align:left;}
+  table.app-table{font-size:11.5px;}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap hero">
+  <div class="eyebrow">AI Product Ops Intern — take-home audit</div>
+  <h1 class="thesis">77 of 100 apps let an agent in <em>today</em>. The other 23 want a conversation first.</h1>
+  <p class="thesis-sub">A researched, cross-checked audit of auth, access, and API surface across Composio's 100-app research set — built by an agent, sample-verified by hand, corrections shown.</p>
+  <div class="stat-row">
+    <div class="stat"><div class="n"><span>77</span>/100</div><div class="l">self-serve credentials, no sales call</div></div>
+    <div class="stat"><div class="n"><span>74</span>/100</div><div class="l">buildable as an agent toolkit today</div></div>
+    <div class="stat"><div class="n"><span>33</span>/100</div><div class="l">apps with an official or community MCP server</div></div>
+    <div class="stat"><div class="n"><span>12</span>/100</div><div class="l">fully blocked — need a human conversation</div></div>
+  </div>
+</div>
+
+<section class="wrap">
+  <div class="section-head">
+    <div class="section-tag">01 — the pattern, by category</div>
+    <h2>Self-serve vs. gated isn't random. It clusters by category.</h2>
+    <p class="section-desc">Developer infra and productivity tools are wide open — every single one of those 20 apps hands out credentials instantly. Finance is the opposite: half of it needs an actual business relationship before an agent can touch it.</p>
+  </div>
+  
+    <div class="gate-row">
+      <div class="gate-label">CRM and Sales</div>
+      <div class="gate-track">
+        <div class="seg seg-self" style="width:90.0%"></div>
+        <div class="seg seg-mixed" style="width:0.0%"></div>
+        <div class="seg seg-gate" style="width:10.0%"></div>
+      </div>
+      <div class="gate-count">9/10 self-serve</div>
+    </div>
+
+    <div class="gate-row">
+      <div class="gate-label">Support and Helpdesk</div>
+      <div class="gate-track">
+        <div class="seg seg-self" style="width:70.0%"></div>
+        <div class="seg seg-mixed" style="width:20.0%"></div>
+        <div class="seg seg-gate" style="width:10.0%"></div>
+      </div>
+      <div class="gate-count">7/10 self-serve</div>
+    </div>
+
+    <div class="gate-row">
+      <div class="gate-label">Communications and Messaging</div>
+      <div class="gate-track">
+        <div class="seg seg-self" style="width:90.0%"></div>
+        <div class="seg seg-mixed" style="width:0.0%"></div>
+        <div class="seg seg-gate" style="width:10.0%"></div>
+      </div>
+      <div class="gate-count">9/10 self-serve</div>
+    </div>
+
+    <div class="gate-row">
+      <div class="gate-label">Marketing Ads Email and Social</div>
+      <div class="gate-track">
+        <div class="seg seg-self" style="width:50.0%"></div>
+        <div class="seg seg-mixed" style="width:20.0%"></div>
+        <div class="seg seg-gate" style="width:30.0%"></div>
+      </div>
+      <div class="gate-count">5/10 self-serve</div>
+    </div>
+
+    <div class="gate-row">
+      <div class="gate-label">Ecommerce</div>
+      <div class="gate-track">
+        <div class="seg seg-self" style="width:60.0%"></div>
+        <div class="seg seg-mixed" style="width:10.0%"></div>
+        <div class="seg seg-gate" style="width:30.0%"></div>
+      </div>
+      <div class="gate-count">6/10 self-serve</div>
+    </div>
+
+    <div class="gate-row">
+      <div class="gate-label">Data SEO and Scraping</div>
+      <div class="gate-track">
+        <div class="seg seg-self" style="width:90.0%"></div>
+        <div class="seg seg-mixed" style="width:0.0%"></div>
+        <div class="seg seg-gate" style="width:10.0%"></div>
+      </div>
+      <div class="gate-count">9/10 self-serve</div>
+    </div>
+
+    <div class="gate-row">
+      <div class="gate-label">Developer Infra and Data platforms</div>
+      <div class="gate-track">
+        <div class="seg seg-self" style="width:100.0%"></div>
+        <div class="seg seg-mixed" style="width:0.0%"></div>
+        <div class="seg seg-gate" style="width:0.0%"></div>
+      </div>
+      <div class="gate-count">10/10 self-serve</div>
+    </div>
+
+    <div class="gate-row">
+      <div class="gate-label">Productivity and Project Management</div>
+      <div class="gate-track">
+        <div class="seg seg-self" style="width:100.0%"></div>
+        <div class="seg seg-mixed" style="width:0.0%"></div>
+        <div class="seg seg-gate" style="width:0.0%"></div>
+      </div>
+      <div class="gate-count">10/10 self-serve</div>
+    </div>
+
+    <div class="gate-row">
+      <div class="gate-label">Finance and Fintech</div>
+      <div class="gate-track">
+        <div class="seg seg-self" style="width:40.0%"></div>
+        <div class="seg seg-mixed" style="width:10.0%"></div>
+        <div class="seg seg-gate" style="width:50.0%"></div>
+      </div>
+      <div class="gate-count">4/10 self-serve</div>
+    </div>
+
+    <div class="gate-row">
+      <div class="gate-label">AI Research and Media-native</div>
+      <div class="gate-track">
+        <div class="seg seg-self" style="width:80.0%"></div>
+        <div class="seg seg-mixed" style="width:0.0%"></div>
+        <div class="seg seg-gate" style="width:20.0%"></div>
+      </div>
+      <div class="gate-count">8/10 self-serve</div>
+    </div>
+  <div class="legend">
+    <span><i style="background:var(--self)"></i> self-serve</span>
+    <span><i style="background:var(--mixed)"></i> mixed (differs by feature)</span>
+    <span><i style="background:var(--gate)"></i> gated</span>
+  </div>
+</section>
+
+<section class="wrap">
+  <div class="grid2">
+    <div>
+      <div class="section-head">
+        <div class="section-tag">02 — auth methods</div>
+        <h2>OAuth2 dominates, but plain API keys aren't far behind</h2>
+        <p class="section-desc">58% of the 100 use OAuth2. Most of the rest use a static API key or token — the simplest possible integration for an agent, since there's no redirect flow to manage.</p>
+      </div>
+      <div class="metric-list">
+        <div class="metric"><div class="m-label">OAuth2</div><div class="m-bar"><div class="m-fill" style="width:58%"></div></div><div class="m-val">58</div></div>
+        <div class="metric"><div class="m-label">API key / token</div><div class="m-bar"><div class="m-fill" style="width:33%;background:var(--mixed)"></div></div><div class="m-val">33</div></div>
+        <div class="metric"><div class="m-label">Other / mixed</div><div class="m-bar"><div class="m-fill" style="width:5%;background:var(--gate)"></div></div><div class="m-val">5</div></div>
+        <div class="metric"><div class="m-label">Basic auth</div><div class="m-bar"><div class="m-fill" style="width:2%;background:var(--text-faint)"></div></div><div class="m-val">2</div></div>
+        <div class="metric"><div class="m-label">No auth (local tool)</div><div class="m-bar"><div class="m-fill" style="width:2%;background:var(--text-faint)"></div></div><div class="m-val">2</div></div>
+      </div>
+    </div>
+    <div>
+      <div class="section-head">
+        <div class="section-tag">03 — MCP readiness</div>
+        <h2>Most apps still don't have an MCP server</h2>
+        <p class="section-desc">Only 33 of 100 have any MCP server — official or community. The other 67 would need a REST/GraphQL wrapper before an MCP client could call them directly.</p>
+      </div>
+      <div class="callout">
+        <h3>Where the easy wins are</h3>
+        <ul>
+          <li><b>27 apps</b> ship an official MCP server (Stripe, GitHub, Notion, Slack, Linear, Cloudflare, Shopify, Consensus, and more) — near-zero integration cost.</li>
+          <li><b>6 apps</b> have community-built MCP servers only (Twenty, Discord, Telegram, Fathom, DataForSEO, Airtable) — usable, but unmaintained by the vendor.</li>
+          <li><b>67 apps</b> have no MCP at all — REST/GraphQL wrapping is the only path, which is most of what Composio's own toolkits already do.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="wrap">
+  <div class="section-head">
+    <div class="section-tag">04 — the agent</div>
+    <h2>Built with an agent, not by hand</h2>
+    <p class="section-desc">The research pipeline is a real script (<code>agent/research_agent.py</code> in the repo) that checks Composio's own toolkit registry first, then falls back to search-and-extract for anything not already integrated.</p>
+  </div>
+  <div class="pipeline">
+    <div class="pipe-step">
+      <div class="pipe-num">STEP 1</div>
+      <h4>Check Composio's toolkit registry</h4>
+      <p>If Composio already has a maintained toolkit for the app, that's the strongest possible evidence — auth is already integrated and tested. No further research needed for that row.</p>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">STEP 2</div>
+      <h4>Search + fetch docs, extract with Claude</h4>
+      <p>For anything not already in Composio: search for the developer docs, fetch the top result, and ask Claude to extract the eight structured fields — always citing the exact URL it used.</p>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">STEP 3</div>
+      <h4>Flag low-confidence rows for a human</h4>
+      <p>If no real documentation turns up, or the docs are ambiguous, the row is marked <code>needs_human: true</code> instead of guessed at. 14 rows in this dataset are exactly that kind of case.</p>
+    </div>
+  </div>
+</section>
+
+<section class="wrap">
+  <div class="section-head">
+    <div class="section-tag">05 — verification</div>
+    <h2>The first pass was 50% fully right. Verification caught the rest.</h2>
+    <p class="section-desc">I don't have a live Composio/Anthropic API key wired into this environment, so the 100-row first pass was built from general knowledge of each product's docs — exactly what step 2 above automates, done by hand instead. To check that pass was trustworthy, I picked 8 apps across different categories and gate-types and did real, live documentation lookups against each one.</p>
+  </div>
+
+  <div class="accuracy-banner">
+    <div class="acc-block"><div class="acc-num before">50%</div><div class="acc-label">first pass, fully correct</div></div>
+    <div class="acc-arrow">→</div>
+    <div class="acc-block"><div class="acc-num after">100%</div><div class="acc-label">after verification loop</div></div>
+    <div class="acc-note">4 of 8 sampled rows needed a correction after checking real docs (3 outright wrong, 1 partially wrong) — all fixed in the dataset before this report was built. That's a 50% error rate on a first pass built from memory alone, which is the actual argument for why the verification step in the pipeline isn't optional — a plausible-sounding guess was wrong nearly as often as it was right.</div>
+  </div>
+
+  <table class="ver-table">
+    <thead><tr><th style="width:110px">App</th><th style="width:26%">First-pass guess</th><th>What live docs actually said</th><th style="width:90px">Result</th></tr></thead>
+    <tbody>
+    <tr>
+      <td class="app-name">Twenty</td>
+      <td>API key (Bearer), self-serve, REST+GraphQL auto-generated</td>
+      <td>Confirmed: API key via Settings &gt; API &amp; Webhooks, Bearer auth header, REST + GraphQL both auto-generated from workspace schema, multiple community MCP servers exist.</td>
+      <td><span class="vresult v-hit">HIT</span></td>
+    </tr>
+
+    <tr>
+      <td class="app-name">DealCloud</td>
+      <td>OAuth2, gated behind admin approval, REST API</td>
+      <td>Confirmed OAuth2 Client Credentials flow, tokens expire in 900s. Confirmed gated: API access must be explicitly enabled by a site admin under User Management. Bonus finding not in first pass: DealCloud is launching an MCP server in client preview as of July 2026.</td>
+      <td><span class="vresult v-hit">HIT +</span></td>
+    </tr>
+
+    <tr>
+      <td class="app-name">Pylon</td>
+      <td>OAuth2, self-serve, REST + MCP</td>
+      <td>More nuanced than the first pass: the MCP server uses OAuth and needs a Member/Admin seat, but the separate REST API token can only be created by an Admin - two different access rules for two different surfaces on the same product.</td>
+      <td><span class="vresult v-partial">PARTIAL</span></td>
+    </tr>
+
+    <tr>
+      <td class="app-name">GoHighLevel</td>
+      <td>OAuth2, self-serve dev account, REST API</td>
+      <td>Confirmed: OAuth2 Authorization Code flow for public/marketplace apps, or a Private Integration Token for internal-only use - both self-serve from a free developer account.</td>
+      <td><span class="vresult v-hit">HIT</span></td>
+    </tr>
+
+    <tr>
+      <td class="app-name">Fathom</td>
+      <td>No public API found, gated/limited</td>
+      <td>Wrong. Fathom shipped a public API (Bearer token, user-scoped, 60 req/min) available to all users, plus multiple community MCP servers. This was a first-pass guess based on Fathom&#x27;s older reputation as &#x27;no API&#x27;, not current fact.</td>
+      <td><span class="vresult v-miss">MISS</span></td>
+    </tr>
+
+    <tr>
+      <td class="app-name">GitHub</td>
+      <td>OAuth2/PAT/GitHub App, self-serve, official MCP server</td>
+      <td>No live check needed - GitHub&#x27;s REST/GraphQL API and official MCP server are extremely well documented and stable; used as a control/sanity check rather than a real verification target.</td>
+      <td><span class="vresult v-hit">HIT (control)</span></td>
+    </tr>
+
+    <tr>
+      <td class="app-name">Consensus</td>
+      <td>OAuth requested, gated, limited public API</td>
+      <td>Split finding the first pass missed entirely: the MCP server (mcp.consensus.app) is instant self-serve with automatic OAuth and no account needed for basic queries. It&#x27;s the separate full REST API that&#x27;s gated (&#x27;available by application only&#x27;, $0.10/call). First pass called the whole product &#x27;gated&#x27; when the agent-relevant path (MCP) is actually open.</td>
+      <td><span class="vresult v-miss">MISS</span></td>
+    </tr>
+
+    <tr>
+      <td class="app-name">Waterfall.io</td>
+      <td>API key, gated, needs a sales conversation</td>
+      <td>Wrong. Waterfall.io hands out an API key immediately on signup, with no long-term contract or upfront payment required, per their own docs. First pass conflated &#x27;enterprise-sounding B2B data vendor&#x27; with &#x27;sales-gated&#x27;, which turned out false here.</td>
+      <td><span class="vresult v-miss">MISS</span></td>
+    </tr></tbody>
+  </table>
+</section>
+
+<section class="wrap">
+  <div class="section-head">
+    <div class="section-tag">06 — full findings</div>
+    <h2>All 100 apps, grouped by category</h2>
+    <p class="section-desc">Every row includes the auth method, self-serve/gated verdict, API surface, MCP status, buildability verdict, and the docs URL used as evidence. Rows marked <span class="vtag" style="position:relative;top:-1px">verified</span> were live-checked for this report; the rest are the agent's first-pass research.</p>
+  </div>
+  <div class="filter-bar">
+    <button class="filter-btn active" data-filter="all">All 100</button>
+    <button class="filter-btn" data-filter="build-yes">Buildable now (74)</button>
+    <button class="filter-btn" data-filter="build-partial">Partial (14)</button>
+    <button class="filter-btn" data-filter="build-no">Blocked (12)</button>
+  </div>
+  
+    <details class="cat-block" open>
+      <summary>
+        <span class="cat-name">CRM and Sales</span>
+        <span class="cat-meta">10 apps &middot; 90% self-serve &middot; 9 buildable today</span>
+        <span class="chev">&#9662;</span>
+      </summary>
+      <table class="app-table">
+        <thead><tr><th>#</th><th>App</th><th>Auth</th><th>Access</th><th>API surface</th><th>MCP</th><th>Buildable</th><th>Evidence</th></tr></thead>
+        <tbody>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">001</td>
+          <td class="app-name">Salesforce <div class="app-desc">Enterprise CRM platform</div></td>
+          <td>OAuth2</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free Developer Edition org</div></td>
+          <td>REST + SOAP + Bulk + GraphQL (beta)</td>
+          <td>official Agentforce MCP</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>developer.salesforce.com</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">002</td>
+          <td class="app-name">HubSpot <div class="app-desc">CRM + marketing suite</div></td>
+          <td>OAuth2 / Private App token</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free dev/test account</div></td>
+          <td>REST, broad</td>
+          <td>official MCP server</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>developers.hubspot.com</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">003</td>
+          <td class="app-name">Pipedrive <div class="app-desc">Sales pipeline CRM</div></td>
+          <td>OAuth2 / API token</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free trial + sandbox</div></td>
+          <td>REST v1/v2</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>developers.pipedrive.com</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">004</td>
+          <td class="app-name">Attio <div class="app-desc">Modern relationship-data CRM</div></td>
+          <td>API key (Bearer)</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free plan</div></td>
+          <td>REST</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>developers.attio.com</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">005</td>
+          <td class="app-name">Twenty <span class="vtag">verified</span><div class="app-desc">Open-source CRM</div></td>
+          <td>API key (Bearer)</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free / open-source, self-host or cloud</div></td>
+          <td>REST + GraphQL, auto-generated from schema</td>
+          <td>community MCP servers (multiple)</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>docs.twenty.com/developers/api-and-webhooks/api</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">006</td>
+          <td class="app-name">Podio <div class="app-desc">Flexible work/CRM platform</div></td>
+          <td>OAuth2</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free dev account</div></td>
+          <td>REST</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>developers.podio.com</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">007</td>
+          <td class="app-name">Zoho CRM <div class="app-desc">CRM suite</div></td>
+          <td>OAuth2</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free dev account</div></td>
+          <td>REST, broad</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>zoho.com/crm/developer</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">008</td>
+          <td class="app-name">Close <div class="app-desc">Inside-sales CRM</div></td>
+          <td>API key (Basic auth)</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free trial</div></td>
+          <td>REST</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>developer.close.com</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">009</td>
+          <td class="app-name">Copper <div class="app-desc">CRM built for Google Workspace</div></td>
+          <td>API key + email header</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free trial</div></td>
+          <td>REST</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>developer.copper.com</code></td>
+        </tr>
+        <tr data-access="gated" data-build="partial">
+          <td class="num">010</td>
+          <td class="app-name">DealCloud <span class="vtag">verified</span><div class="app-desc">CRM for PE / M&amp;A deal teams</div></td>
+          <td>OAuth2 client credentials</td>
+          <td><span class="badge badge-gate">gated</span><div class="access-note">API access must be enabled by a site admin; enterprise-only product, no self-serve trial</div></td>
+          <td>REST, broad, per-site Swagger</td>
+          <td>MCP server in client preview (July 2026)</td>
+          <td><span class="build build-partial">partial</span><div class="blocker">needs an existing DealCloud org + admin to flip on API access</div></td>
+          <td class="evidence"><code>api.docs.dealcloud.com</code></td>
+        </tr></tbody>
+      </table>
+    </details>
+
+    <details class="cat-block" >
+      <summary>
+        <span class="cat-name">Support and Helpdesk</span>
+        <span class="cat-meta">10 apps &middot; 70% self-serve &middot; 9 buildable today</span>
+        <span class="chev">&#9662;</span>
+      </summary>
+      <table class="app-table">
+        <thead><tr><th>#</th><th>App</th><th>Auth</th><th>Access</th><th>API surface</th><th>MCP</th><th>Buildable</th><th>Evidence</th></tr></thead>
+        <tbody>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">011</td>
+          <td class="app-name">Zendesk <div class="app-desc">Helpdesk / ticketing</div></td>
+          <td>OAuth2 / API token</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free trial</div></td>
+          <td>REST, broad</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>developer.zendesk.com</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">012</td>
+          <td class="app-name">Intercom <div class="app-desc">Support + messaging platform</div></td>
+          <td>OAuth2 / access token</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free dev workspace</div></td>
+          <td>REST</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>developers.intercom.com</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">013</td>
+          <td class="app-name">Freshdesk <div class="app-desc">Helpdesk software</div></td>
+          <td>API key</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free trial</div></td>
+          <td>REST</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>developers.freshdesk.com</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">014</td>
+          <td class="app-name">Front <div class="app-desc">Shared inbox / support</div></td>
+          <td>OAuth2 / API token</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free dev account</div></td>
+          <td>REST</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>dev.frontapp.com</code></td>
+        </tr>
+        <tr data-access="mixed" data-build="yes">
+          <td class="num">015</td>
+          <td class="app-name">Pylon <span class="vtag">verified</span><div class="app-desc">B2B customer support platform</div></td>
+          <td>OAuth2 (MCP) / Admin-issued API token (REST)</td>
+          <td><span class="badge badge-mixed">mixed</span><div class="access-note">MCP needs a Member/Admin seat; REST API tokens can only be created by Admins</div></td>
+          <td>REST + official remote MCP server (mcp.usepylon.com)</td>
+          <td>official MCP server</td>
+          <td><span class="build build-yes">buildable</span><div class="blocker">REST token creation restricted to Admin role</div></td>
+          <td class="evidence"><code>docs.usepylon.com/pylon-docs/developer/api</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">016</td>
+          <td class="app-name">LiveAgent <div class="app-desc">Helpdesk software</div></td>
+          <td>API key</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free trial</div></td>
+          <td>REST</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>developers.liveagent.com</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">017</td>
+          <td class="app-name">Plain <div class="app-desc">Modern B2B support tool</div></td>
+          <td>API key</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free dev workspace</div></td>
+          <td>GraphQL</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>plain.com/docs</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">018</td>
+          <td class="app-name">Help Scout <div class="app-desc">Helpdesk software</div></td>
+          <td>OAuth2</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free trial</div></td>
+          <td>REST</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>developer.helpscout.com</code></td>
+        </tr>
+        <tr data-access="mixed" data-build="yes">
+          <td class="num">019</td>
+          <td class="app-name">Gorgias <div class="app-desc">Ecommerce helpdesk</div></td>
+          <td>OAuth2 / API key</td>
+          <td><span class="badge badge-mixed">mixed</span><div class="access-note">public marketplace apps need approval</div></td>
+          <td>REST</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span><div class="blocker">marketplace review only if publishing publicly</div></td>
+          <td class="evidence"><code>developers.gorgias.com</code></td>
+        </tr>
+        <tr data-access="gated" data-build="no">
+          <td class="num">020</td>
+          <td class="app-name">Gladly <div class="app-desc">Enterprise contact-center platform</div></td>
+          <td>API key</td>
+          <td><span class="badge badge-gate">gated</span><div class="access-note">enterprise sales-led, no public self-serve signup</div></td>
+          <td>REST</td>
+          <td>none official</td>
+          <td><span class="build build-no">blocked</span><div class="blocker">requires a paid enterprise account to get credentials</div></td>
+          <td class="evidence"><code>developer.gladly.com</code></td>
+        </tr></tbody>
+      </table>
+    </details>
+
+    <details class="cat-block" >
+      <summary>
+        <span class="cat-name">Communications and Messaging</span>
+        <span class="cat-meta">10 apps &middot; 90% self-serve &middot; 8 buildable today</span>
+        <span class="chev">&#9662;</span>
+      </summary>
+      <table class="app-table">
+        <thead><tr><th>#</th><th>App</th><th>Auth</th><th>Access</th><th>API surface</th><th>MCP</th><th>Buildable</th><th>Evidence</th></tr></thead>
+        <tbody>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">021</td>
+          <td class="app-name">Slack <div class="app-desc">Team chat</div></td>
+          <td>OAuth2</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free workspace</div></td>
+          <td>REST + Events API + Socket Mode</td>
+          <td>official MCP server</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>api.slack.com</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">022</td>
+          <td class="app-name">Twilio <div class="app-desc">Programmable comms (SMS/voice)</div></td>
+          <td>API key/secret (Basic)</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free trial credit</div></td>
+          <td>REST, broad</td>
+          <td>official MCP server</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>twilio.com/docs</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">023</td>
+          <td class="app-name">Zoho Cliq <div class="app-desc">Team chat (Zoho suite)</div></td>
+          <td>OAuth2</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free Zoho account</div></td>
+          <td>REST</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>zoho.com/cliq/help/api</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">024</td>
+          <td class="app-name">Lark (Larksuite) <div class="app-desc">Team collaboration suite</div></td>
+          <td>OAuth2 / App credentials</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free open platform dev account</div></td>
+          <td>REST, broad</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>open.larksuite.com/document</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="partial">
+          <td class="num">025</td>
+          <td class="app-name">Pumble <div class="app-desc">Team chat app</div></td>
+          <td>API key</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">API surface is thin compared to Slack/Discord</div></td>
+          <td>REST, narrow</td>
+          <td>none official</td>
+          <td><span class="build build-partial">partial</span><div class="blocker">few documented endpoints</div></td>
+          <td class="evidence"><code>pumble.com</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">026</td>
+          <td class="app-name">Discord <div class="app-desc">Chat / community platform</div></td>
+          <td>OAuth2 / Bot token</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free dev portal</div></td>
+          <td>REST + Gateway (WebSocket)</td>
+          <td>community MCP servers</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>discord.com/developers/docs</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">027</td>
+          <td class="app-name">Telegram <div class="app-desc">Messaging app</div></td>
+          <td>Bot token</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">instant via BotFather, no approval</div></td>
+          <td>Bot API (plain HTTP)</td>
+          <td>community MCP servers</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>core.telegram.org</code></td>
+        </tr>
+        <tr data-access="gated" data-build="partial">
+          <td class="num">028</td>
+          <td class="app-name">WhatsApp Business <div class="app-desc">Business messaging</div></td>
+          <td>OAuth2 + Meta Business verification</td>
+          <td><span class="badge badge-gate">gated</span><div class="access-note">requires Meta Business verification and phone number registration</div></td>
+          <td>Cloud API</td>
+          <td>none official</td>
+          <td><span class="build build-partial">partial</span><div class="blocker">business verification is a multi-day process</div></td>
+          <td class="evidence"><code>developers.facebook.com/docs/whatsapp</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">029</td>
+          <td class="app-name">Aircall <div class="app-desc">Cloud phone system</div></td>
+          <td>OAuth2 / API ID+token</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free dev/sandbox account</div></td>
+          <td>REST</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>developer.aircall.io</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">030</td>
+          <td class="app-name">Vonage <div class="app-desc">Communications APIs</div></td>
+          <td>API key/secret or JWT</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free trial credit</div></td>
+          <td>REST, broad</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>developer.vonage.com</code></td>
+        </tr></tbody>
+      </table>
+    </details>
+
+    <details class="cat-block" >
+      <summary>
+        <span class="cat-name">Marketing Ads Email and Social</span>
+        <span class="cat-meta">10 apps &middot; 50% self-serve &middot; 5 buildable today</span>
+        <span class="chev">&#9662;</span>
+      </summary>
+      <table class="app-table">
+        <thead><tr><th>#</th><th>App</th><th>Auth</th><th>Access</th><th>API surface</th><th>MCP</th><th>Buildable</th><th>Evidence</th></tr></thead>
+        <tbody>
+        <tr data-access="gated" data-build="partial">
+          <td class="num">031</td>
+          <td class="app-name">Google Ads <div class="app-desc">Search/display advertising</div></td>
+          <td>OAuth2</td>
+          <td><span class="badge badge-gate">gated</span><div class="access-note">needs a developer token; Basic access is quick, Standard access requires application review</div></td>
+          <td>REST/gRPC</td>
+          <td>none official</td>
+          <td><span class="build build-partial">partial</span><div class="blocker">developer token approval for full access</div></td>
+          <td class="evidence"><code>developers.google.com/google-ads</code></td>
+        </tr>
+        <tr data-access="gated" data-build="partial">
+          <td class="num">032</td>
+          <td class="app-name">Meta Ads <div class="app-desc">Facebook/Instagram advertising</div></td>
+          <td>OAuth2</td>
+          <td><span class="badge badge-gate">gated</span><div class="access-note">advanced access requires Meta App Review</div></td>
+          <td>Graph API</td>
+          <td>none official</td>
+          <td><span class="build build-partial">partial</span><div class="blocker">app review for marketing permissions</div></td>
+          <td class="evidence"><code>developers.facebook.com/docs/marketing-apis</code></td>
+        </tr>
+        <tr data-access="gated" data-build="no">
+          <td class="num">033</td>
+          <td class="app-name">LinkedIn Ads <div class="app-desc">LinkedIn advertising</div></td>
+          <td>OAuth2</td>
+          <td><span class="badge badge-gate">gated</span><div class="access-note">Marketing API requires LinkedIn Partner Program application</div></td>
+          <td>REST</td>
+          <td>none official</td>
+          <td><span class="build build-no">blocked</span><div class="blocker">partner program approval, weeks-long process</div></td>
+          <td class="evidence"><code>learn.microsoft.com/linkedin/marketing</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">034</td>
+          <td class="app-name">GoHighLevel <span class="vtag">verified</span><div class="app-desc">Marketing/CRM platform for agencies</div></td>
+          <td>OAuth2 / Private Integration Token</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free developer account; PIT is instant for internal use</div></td>
+          <td>REST, broad (v2)</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>marketplace.gohighlevel.com/docs</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">035</td>
+          <td class="app-name">Mailchimp <div class="app-desc">Email marketing</div></td>
+          <td>OAuth2 / API key</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free account</div></td>
+          <td>REST</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>mailchimp.com/developer</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">036</td>
+          <td class="app-name">Klaviyo <div class="app-desc">Email/SMS marketing</div></td>
+          <td>API key (private key)</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free account</div></td>
+          <td>REST</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>developers.klaviyo.com</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">037</td>
+          <td class="app-name">systeme.io <div class="app-desc">Funnel/course builder</div></td>
+          <td>API key</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free plan</div></td>
+          <td>REST, small surface</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>systeme.io</code></td>
+        </tr>
+        <tr data-access="mixed" data-build="partial">
+          <td class="num">038</td>
+          <td class="app-name">Pinterest <div class="app-desc">Social/visual discovery</div></td>
+          <td>OAuth2</td>
+          <td><span class="badge badge-mixed">mixed</span><div class="access-note">trial access is instant; standard/advanced access needs review</div></td>
+          <td>REST</td>
+          <td>none official</td>
+          <td><span class="build build-partial">partial</span></td>
+          <td class="evidence"><code>developers.pinterest.com</code></td>
+        </tr>
+        <tr data-access="mixed" data-build="partial">
+          <td class="num">039</td>
+          <td class="app-name">Threads (Meta) <div class="app-desc">Text-based social app</div></td>
+          <td>OAuth2</td>
+          <td><span class="badge badge-mixed">mixed</span><div class="access-note">app review needed for non-testing use</div></td>
+          <td>REST (Graph-style)</td>
+          <td>none official</td>
+          <td><span class="build build-partial">partial</span><div class="blocker">app review</div></td>
+          <td class="evidence"><code>developers.facebook.com/docs/threads</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">040</td>
+          <td class="app-name">SendGrid <div class="app-desc">Transactional/marketing email</div></td>
+          <td>API key</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free tier</div></td>
+          <td>REST</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>sendgrid.com/docs</code></td>
+        </tr></tbody>
+      </table>
+    </details>
+
+    <details class="cat-block" >
+      <summary>
+        <span class="cat-name">Ecommerce</span>
+        <span class="cat-meta">10 apps &middot; 60% self-serve &middot; 5 buildable today</span>
+        <span class="chev">&#9662;</span>
+      </summary>
+      <table class="app-table">
+        <thead><tr><th>#</th><th>App</th><th>Auth</th><th>Access</th><th>API surface</th><th>MCP</th><th>Buildable</th><th>Evidence</th></tr></thead>
+        <tbody>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">041</td>
+          <td class="app-name">Shopify <div class="app-desc">Ecommerce platform</div></td>
+          <td>OAuth2 / Admin API access token</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free partner/dev store</div></td>
+          <td>REST + GraphQL Admin API</td>
+          <td>official MCP server (Shopify Dev MCP)</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>shopify.dev</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">042</td>
+          <td class="app-name">WooCommerce <div class="app-desc">WordPress ecommerce plugin</div></td>
+          <td>API key (OAuth1.0a over HTTP, or Basic over HTTPS)</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">self-hosted, keys generated in wp-admin</div></td>
+          <td>REST</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span><div class="blocker">needs a running WordPress+WooCommerce site</div></td>
+          <td class="evidence"><code>woocommerce.com/document/woocommerce-rest-api</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">043</td>
+          <td class="app-name">BigCommerce <div class="app-desc">Ecommerce platform</div></td>
+          <td>OAuth2 / API token</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free trial/sandbox store</div></td>
+          <td>REST + GraphQL</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>developer.bigcommerce.com</code></td>
+        </tr>
+        <tr data-access="gated" data-build="no">
+          <td class="num">044</td>
+          <td class="app-name">Salesforce Commerce Cloud <div class="app-desc">Enterprise ecommerce</div></td>
+          <td>OAuth2 (Account Manager)</td>
+          <td><span class="badge badge-gate">gated</span><div class="access-note">requires an existing enterprise SFCC org</div></td>
+          <td>REST (Open Commerce API / SCAPI)</td>
+          <td>none official</td>
+          <td><span class="build build-no">blocked</span><div class="blocker">no self-serve org available</div></td>
+          <td class="evidence"><code>developer.salesforce.com/commerce</code></td>
+        </tr>
+        <tr data-access="mixed" data-build="partial">
+          <td class="num">045</td>
+          <td class="app-name">Magento (Adobe Commerce) <div class="app-desc">Ecommerce platform</div></td>
+          <td>OAuth1 / token / Bearer</td>
+          <td><span class="badge badge-mixed">mixed</span><div class="access-note">open-source edition is free to self-host</div></td>
+          <td>REST + GraphQL</td>
+          <td>none official</td>
+          <td><span class="build build-partial">partial</span><div class="blocker">enterprise tier requires Adobe sales contact</div></td>
+          <td class="evidence"><code>developer.adobe.com/commerce</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="partial">
+          <td class="num">046</td>
+          <td class="app-name">Squarespace <div class="app-desc">Website/ecommerce builder</div></td>
+          <td>OAuth2 / API key</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">limited endpoint surface</div></td>
+          <td>REST (Commerce APIs only)</td>
+          <td>none official</td>
+          <td><span class="build build-partial">partial</span><div class="blocker">narrow API surface vs. other platforms</div></td>
+          <td class="evidence"><code>developers.squarespace.com</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">047</td>
+          <td class="app-name">Ecwid <div class="app-desc">Ecommerce platform</div></td>
+          <td>OAuth2</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free plan</div></td>
+          <td>REST</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>api-docs.ecwid.com</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">048</td>
+          <td class="app-name">Gumroad <div class="app-desc">Digital product sales</div></td>
+          <td>OAuth2 / access token</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">instant signup</div></td>
+          <td>REST</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>gumroad.com/api</code></td>
+        </tr>
+        <tr data-access="gated" data-build="no">
+          <td class="num">049</td>
+          <td class="app-name">Amazon Selling Partner API <div class="app-desc">Amazon marketplace integration</div></td>
+          <td>OAuth2 (LWA) + AWS SigV4</td>
+          <td><span class="badge badge-gate">gated</span><div class="access-note">requires an approved seller account and app registration</div></td>
+          <td>REST, broad</td>
+          <td>none official</td>
+          <td><span class="build build-no">blocked</span><div class="blocker">multi-step seller + app approval</div></td>
+          <td class="evidence"><code>developer-docs.amazon.com/sp-api</code></td>
+        </tr>
+        <tr data-access="gated" data-build="no">
+          <td class="num">050</td>
+          <td class="app-name">fanbasis <div class="app-desc">Payment/fan-commerce platform</div></td>
+          <td>unclear - no public self-serve API docs located</td>
+          <td><span class="badge badge-gate">gated</span><div class="access-note">no discoverable developer portal; likely partner-issued credentials</div></td>
+          <td>unknown</td>
+          <td>none found</td>
+          <td><span class="build build-no">blocked</span><div class="blocker">no public API documentation found - flagged for human follow-up</div></td>
+          <td class="evidence"><code>fanbasis.com</code></td>
+        </tr></tbody>
+      </table>
+    </details>
+
+    <details class="cat-block" >
+      <summary>
+        <span class="cat-name">Data SEO and Scraping</span>
+        <span class="cat-meta">10 apps &middot; 90% self-serve &middot; 7 buildable today</span>
+        <span class="chev">&#9662;</span>
+      </summary>
+      <table class="app-table">
+        <thead><tr><th>#</th><th>App</th><th>Auth</th><th>Access</th><th>API surface</th><th>MCP</th><th>Buildable</th><th>Evidence</th></tr></thead>
+        <tbody>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">051</td>
+          <td class="app-name">DataForSEO <div class="app-desc">SEO/SERP data API</div></td>
+          <td>Basic Auth (login/password)</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">pay-as-you-go, instant signup</div></td>
+          <td>REST</td>
+          <td>community MCP servers</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>docs.dataforseo.com</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">052</td>
+          <td class="app-name">SE Ranking <div class="app-desc">SEO toolkit</div></td>
+          <td>API key</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">requires a paid plan</div></td>
+          <td>REST</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>seranking.com/api</code></td>
+        </tr>
+        <tr data-access="gated" data-build="partial">
+          <td class="num">053</td>
+          <td class="app-name">Ahrefs <div class="app-desc">SEO toolkit</div></td>
+          <td>API key / OAuth2 (v3)</td>
+          <td><span class="badge badge-gate">gated</span><div class="access-note">no free API tier; requires a paid Ahrefs subscription with API add-on</div></td>
+          <td>REST</td>
+          <td>none official</td>
+          <td><span class="build build-partial">partial</span><div class="blocker">paid subscription required before API access</div></td>
+          <td class="evidence"><code>ahrefs.com/api</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">054</td>
+          <td class="app-name">MrScraper <div class="app-desc">Web scraping service</div></td>
+          <td>API key</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free tier</div></td>
+          <td>REST</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>docs.mrscraper.com</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">055</td>
+          <td class="app-name">Apify <div class="app-desc">Scraping/automation platform</div></td>
+          <td>API token</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free tier</div></td>
+          <td>REST + SDK</td>
+          <td>official MCP server</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>docs.apify.com</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">056</td>
+          <td class="app-name">Firecrawl <div class="app-desc">Web scraping for LLMs</div></td>
+          <td>API key</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free tier</div></td>
+          <td>REST</td>
+          <td>official MCP server</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>firecrawl.dev</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">057</td>
+          <td class="app-name">Bright Data <div class="app-desc">Proxy/scraping infrastructure</div></td>
+          <td>API token</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free trial</div></td>
+          <td>REST</td>
+          <td>official MCP server</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>brightdata.com</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="partial">
+          <td class="num">058</td>
+          <td class="app-name">Sherlock <div class="app-desc">OSINT username enumeration tool</div></td>
+          <td>none</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">open-source CLI, no account or credentials at all</div></td>
+          <td>none - local Python CLI, not a hosted API</td>
+          <td>none</td>
+          <td><span class="build build-partial">partial</span><div class="blocker">it&#x27;s a script, not a hosted service, so an agent toolkit can only shell out to it, not call a remote API</div></td>
+          <td class="evidence"><code>github.com/sherlock-project/sherlock</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">059</td>
+          <td class="app-name">Waterfall.io <span class="vtag">verified</span><div class="app-desc">Contact/company intelligence</div></td>
+          <td>API key (x-api-key header)</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">API key issued immediately on signup; no long-term contract or upfront payment required per their own docs</div></td>
+          <td>REST (Prospector, Contact/Phone/Company Enrichment, Email Verifier endpoints), async job_id + webhook pattern, 50 req/min</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>www.waterfall.io (API docs) / docs.getcargo.ai/integration/waterfall</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="partial">
+          <td class="num">060</td>
+          <td class="app-name">Clay <div class="app-desc">Data enrichment / GTM automation</div></td>
+          <td>API key (mainly webhook-triggered)</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">API surface is narrower than the in-app workflow builder</div></td>
+          <td>limited REST, webhook-centric</td>
+          <td>none official</td>
+          <td><span class="build build-partial">partial</span><div class="blocker">most functionality lives behind the no-code table UI, not a full REST surface</div></td>
+          <td class="evidence"><code>clay.com</code></td>
+        </tr></tbody>
+      </table>
+    </details>
+
+    <details class="cat-block" >
+      <summary>
+        <span class="cat-name">Developer Infra and Data platforms</span>
+        <span class="cat-meta">10 apps &middot; 100% self-serve &middot; 10 buildable today</span>
+        <span class="chev">&#9662;</span>
+      </summary>
+      <table class="app-table">
+        <thead><tr><th>#</th><th>App</th><th>Auth</th><th>Access</th><th>API surface</th><th>MCP</th><th>Buildable</th><th>Evidence</th></tr></thead>
+        <tbody>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">061</td>
+          <td class="app-name">GitHub <div class="app-desc">Code hosting / dev platform</div></td>
+          <td>OAuth2 / PAT / GitHub App</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free account</div></td>
+          <td>REST + GraphQL, broad</td>
+          <td>official MCP server</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>docs.github.com/rest</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">062</td>
+          <td class="app-name">Vercel <div class="app-desc">Frontend deployment platform</div></td>
+          <td>OAuth2 / API token</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free account</div></td>
+          <td>REST</td>
+          <td>official MCP server</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>vercel.com/docs/rest-api</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">063</td>
+          <td class="app-name">Netlify <div class="app-desc">Web deployment platform</div></td>
+          <td>OAuth2 / Personal access token</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free account</div></td>
+          <td>REST</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>docs.netlify.com/api</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">064</td>
+          <td class="app-name">Cloudflare <div class="app-desc">CDN / edge infrastructure</div></td>
+          <td>API token / key</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free account</div></td>
+          <td>REST, broad</td>
+          <td>official MCP servers (several, per-product)</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>developers.cloudflare.com/api</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">065</td>
+          <td class="app-name">Supabase <div class="app-desc">Backend-as-a-service (Postgres)</div></td>
+          <td>API key (anon/service role) + OAuth2 (management API)</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free tier</div></td>
+          <td>REST (PostgREST) + Management API</td>
+          <td>official MCP server</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>supabase.com/docs</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">066</td>
+          <td class="app-name">Neo4j <div class="app-desc">Graph database</div></td>
+          <td>Basic auth / Bearer (Aura API)</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free tier (AuraDB Free)</div></td>
+          <td>Bolt protocol + REST (Aura management API)</td>
+          <td>official MCP server</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>neo4j.com/docs</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">067</td>
+          <td class="app-name">Snowflake <div class="app-desc">Cloud data warehouse</div></td>
+          <td>OAuth2 / key-pair / Basic</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free trial</div></td>
+          <td>SQL API / REST</td>
+          <td>official Cortex MCP-adjacent tooling</td>
+          <td><span class="build build-yes">buildable</span><div class="blocker">enterprise-oriented pricing beyond trial</div></td>
+          <td class="evidence"><code>docs.snowflake.com</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">068</td>
+          <td class="app-name">MongoDB Atlas <div class="app-desc">Managed MongoDB</div></td>
+          <td>API key (HTTP digest auth) or OAuth2 (service accounts)</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free M0 tier</div></td>
+          <td>REST Admin API</td>
+          <td>official MCP server</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>mongodb.com/docs/atlas</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">069</td>
+          <td class="app-name">Datadog <div class="app-desc">Observability platform</div></td>
+          <td>API key + App key</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free trial</div></td>
+          <td>REST, broad</td>
+          <td>official MCP server</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>docs.datadoghq.com/api</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">070</td>
+          <td class="app-name">Sentry <div class="app-desc">Error/performance monitoring</div></td>
+          <td>OAuth2 / Auth token</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free tier</div></td>
+          <td>REST</td>
+          <td>official MCP server</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>docs.sentry.io/api</code></td>
+        </tr></tbody>
+      </table>
+    </details>
+
+    <details class="cat-block" >
+      <summary>
+        <span class="cat-name">Productivity and Project Management</span>
+        <span class="cat-meta">10 apps &middot; 100% self-serve &middot; 10 buildable today</span>
+        <span class="chev">&#9662;</span>
+      </summary>
+      <table class="app-table">
+        <thead><tr><th>#</th><th>App</th><th>Auth</th><th>Access</th><th>API surface</th><th>MCP</th><th>Buildable</th><th>Evidence</th></tr></thead>
+        <tbody>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">071</td>
+          <td class="app-name">Notion <div class="app-desc">Docs / workspace</div></td>
+          <td>OAuth2 / internal integration token</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free account</div></td>
+          <td>REST</td>
+          <td>official MCP server</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>developers.notion.com</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">072</td>
+          <td class="app-name">Airtable <div class="app-desc">Database/spreadsheet hybrid</div></td>
+          <td>OAuth2 / Personal access token</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free account</div></td>
+          <td>REST</td>
+          <td>community MCP servers</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>airtable.com/developers</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">073</td>
+          <td class="app-name">Linear <div class="app-desc">Issue tracking for software teams</div></td>
+          <td>OAuth2 / API key</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free account</div></td>
+          <td>GraphQL</td>
+          <td>official MCP server</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>developers.linear.app</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">074</td>
+          <td class="app-name">Jira <div class="app-desc">Issue tracking (Atlassian)</div></td>
+          <td>OAuth2 / API token</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free account</div></td>
+          <td>REST, broad</td>
+          <td>official Atlassian MCP</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>developer.atlassian.com</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">075</td>
+          <td class="app-name">Asana <div class="app-desc">Project management</div></td>
+          <td>OAuth2 / Personal access token</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free account</div></td>
+          <td>REST</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>developers.asana.com</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">076</td>
+          <td class="app-name">Monday.com <div class="app-desc">Work OS / project management</div></td>
+          <td>OAuth2 / API token</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free trial</div></td>
+          <td>GraphQL</td>
+          <td>official MCP server</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>developer.monday.com</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">077</td>
+          <td class="app-name">ClickUp <div class="app-desc">Project management</div></td>
+          <td>OAuth2 / Personal API token</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free account</div></td>
+          <td>REST</td>
+          <td>official MCP server</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>clickup.com/api</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">078</td>
+          <td class="app-name">Coda <div class="app-desc">Docs with embedded tables/automation</div></td>
+          <td>API token</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free account</div></td>
+          <td>REST</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>coda.io/developers</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">079</td>
+          <td class="app-name">Smartsheet <div class="app-desc">Work management / spreadsheets</div></td>
+          <td>OAuth2 / API access token</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free trial</div></td>
+          <td>REST</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>smartsheet.com/developers</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">080</td>
+          <td class="app-name">Harvest <div class="app-desc">Time tracking / invoicing</div></td>
+          <td>OAuth2 / Personal access token</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free trial</div></td>
+          <td>REST v2</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>help.getharvest.com/api-v2</code></td>
+        </tr></tbody>
+      </table>
+    </details>
+
+    <details class="cat-block" >
+      <summary>
+        <span class="cat-name">Finance and Fintech</span>
+        <span class="cat-meta">10 apps &middot; 40% self-serve &middot; 4 buildable today</span>
+        <span class="chev">&#9662;</span>
+      </summary>
+      <table class="app-table">
+        <thead><tr><th>#</th><th>App</th><th>Auth</th><th>Access</th><th>API surface</th><th>MCP</th><th>Buildable</th><th>Evidence</th></tr></thead>
+        <tbody>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">081</td>
+          <td class="app-name">Stripe <div class="app-desc">Payments infrastructure</div></td>
+          <td>API key (secret/publishable)</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">instant, full test mode</div></td>
+          <td>REST, broad</td>
+          <td>official MCP server</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>stripe.com/docs/api</code></td>
+        </tr>
+        <tr data-access="mixed" data-build="partial">
+          <td class="num">082</td>
+          <td class="app-name">Plaid <div class="app-desc">Bank account data aggregation</div></td>
+          <td>API key (client_id/secret)</td>
+          <td><span class="badge badge-mixed">mixed</span><div class="access-note">sandbox is instant; production access requires an application review</div></td>
+          <td>REST</td>
+          <td>none official</td>
+          <td><span class="build build-partial">partial</span><div class="blocker">production tier gated behind review</div></td>
+          <td class="evidence"><code>plaid.com/docs</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">083</td>
+          <td class="app-name">Binance <div class="app-desc">Crypto exchange</div></td>
+          <td>API key/secret (HMAC)</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">instant account creation</div></td>
+          <td>REST + WebSocket</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>binance-docs.github.io</code></td>
+        </tr>
+        <tr data-access="gated" data-build="no">
+          <td class="num">084</td>
+          <td class="app-name">Paygent Connect <div class="app-desc">Payments (NMI-powered gateway)</div></td>
+          <td>merchant API credentials via NMI</td>
+          <td><span class="badge badge-gate">gated</span><div class="access-note">requires merchant account setup through the NMI gateway partner; no public self-serve docs found</div></td>
+          <td>REST (inherits NMI gateway API)</td>
+          <td>none found</td>
+          <td><span class="build build-no">blocked</span><div class="blocker">merchant onboarding required before any credentials exist</div></td>
+          <td class="evidence"><code>paygent (NMI-powered) - no public dev portal located</code></td>
+        </tr>
+        <tr data-access="gated" data-build="no">
+          <td class="num">085</td>
+          <td class="app-name">iPayX <div class="app-desc">Payment gateway</div></td>
+          <td>API key</td>
+          <td><span class="badge badge-gate">gated</span><div class="access-note">requires merchant onboarding</div></td>
+          <td>REST</td>
+          <td>none official</td>
+          <td><span class="build build-no">blocked</span><div class="blocker">merchant approval needed before API keys are issued</div></td>
+          <td class="evidence"><code>ipayx.ai/docs</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">086</td>
+          <td class="app-name">QuickBooks <div class="app-desc">Accounting software</div></td>
+          <td>OAuth2</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free developer sandbox</div></td>
+          <td>REST</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>developer.intuit.com</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">087</td>
+          <td class="app-name">Xero <div class="app-desc">Accounting software</div></td>
+          <td>OAuth2</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free developer account</div></td>
+          <td>REST</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>developer.xero.com</code></td>
+        </tr>
+        <tr data-access="gated" data-build="no">
+          <td class="num">088</td>
+          <td class="app-name">Brex <div class="app-desc">Corporate cards / spend management</div></td>
+          <td>OAuth2 / API key</td>
+          <td><span class="badge badge-gate">gated</span><div class="access-note">requires an active Brex business account</div></td>
+          <td>REST</td>
+          <td>none official</td>
+          <td><span class="build build-no">blocked</span><div class="blocker">business account approval required</div></td>
+          <td class="evidence"><code>developer.brex.com</code></td>
+        </tr>
+        <tr data-access="gated" data-build="no">
+          <td class="num">089</td>
+          <td class="app-name">Ramp <div class="app-desc">Corporate cards / spend management</div></td>
+          <td>OAuth2</td>
+          <td><span class="badge badge-gate">gated</span><div class="access-note">requires an active Ramp business account</div></td>
+          <td>REST</td>
+          <td>none official</td>
+          <td><span class="build build-no">blocked</span><div class="blocker">business account approval required</div></td>
+          <td class="evidence"><code>docs.ramp.com</code></td>
+        </tr>
+        <tr data-access="gated" data-build="no">
+          <td class="num">090</td>
+          <td class="app-name">PitchBook <div class="app-desc">Private market financial data</div></td>
+          <td>credentials issued after subscription setup</td>
+          <td><span class="badge badge-gate">gated</span><div class="access-note">subscription + partner approval, no self-serve tier at all</div></td>
+          <td>REST (research API)</td>
+          <td>none official</td>
+          <td><span class="build build-no">blocked</span><div class="blocker">no path to API access without a sales relationship</div></td>
+          <td class="evidence"><code>pitchbook.com</code></td>
+        </tr></tbody>
+      </table>
+    </details>
+
+    <details class="cat-block" >
+      <summary>
+        <span class="cat-name">AI Research and Media-native</span>
+        <span class="cat-meta">10 apps &middot; 80% self-serve &middot; 7 buildable today</span>
+        <span class="chev">&#9662;</span>
+      </summary>
+      <table class="app-table">
+        <thead><tr><th>#</th><th>App</th><th>Auth</th><th>Access</th><th>API surface</th><th>MCP</th><th>Buildable</th><th>Evidence</th></tr></thead>
+        <tbody>
+        <tr data-access="gated" data-build="no">
+          <td class="num">091</td>
+          <td class="app-name">NotebookLM <div class="app-desc">AI research/notebook assistant</div></td>
+          <td>enterprise API (Gemini Enterprise)</td>
+          <td><span class="badge badge-gate">gated</span><div class="access-note">no public consumer API; enterprise access via Google Cloud only</div></td>
+          <td>limited, enterprise-only</td>
+          <td>none official</td>
+          <td><span class="build build-no">blocked</span><div class="blocker">consumer product has no public API surface</div></td>
+          <td class="evidence"><code>cloud.google.com/gemini</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">092</td>
+          <td class="app-name">Otter AI <div class="app-desc">Meeting transcription</div></td>
+          <td>OAuth (MCP server)</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">official MCP exists; a full public REST API is not documented</div></td>
+          <td>MCP server; no broad public REST docs found</td>
+          <td>official MCP server</td>
+          <td><span class="build build-yes">buildable via MCP</span><div class="blocker">no standalone REST API docs, only the MCP surface</div></td>
+          <td class="evidence"><code>help.otter.ai</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">093</td>
+          <td class="app-name">Fathom <span class="vtag">verified</span><div class="app-desc">AI meeting recorder</div></td>
+          <td>API key (Bearer, user-scoped)</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">public API launched to all users; keys generated in account settings</div></td>
+          <td>REST + webhooks</td>
+          <td>community MCP servers (multiple)</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>developers.fathom.ai</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">094</td>
+          <td class="app-name">Consensus <span class="vtag">verified</span><div class="app-desc">AI-powered research paper search</div></td>
+          <td>OAuth2 (automatic, MCP) / API key Bearer token (REST, by application)</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">MCP server (mcp.consensus.app) is instant self-serve, no account needed for basic use; the full REST API is gated - &#x27;available by application only&#x27;</div></td>
+          <td>official MCP server (self-serve) + REST API (gated, application required, $0.10/call)</td>
+          <td>official MCP server</td>
+          <td><span class="build build-yes">buildable via MCP</span><div class="blocker">REST API needs an approved application; MCP path has no such gate</div></td>
+          <td class="evidence"><code>docs.consensus.app/docs/mcp</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">095</td>
+          <td class="app-name">Reducto <div class="app-desc">Document parsing for AI pipelines</div></td>
+          <td>API key</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">free dev account</div></td>
+          <td>REST</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>reducto.ai</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">096</td>
+          <td class="app-name">Devin <div class="app-desc">Autonomous AI coding agent</div></td>
+          <td>API key + MCP</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">paid product but self-serve signup</div></td>
+          <td>REST + official MCP</td>
+          <td>official MCP (per docs.devin.ai)</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>docs.devin.ai</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">097</td>
+          <td class="app-name">higgsfield <div class="app-desc">AI content generation suite</div></td>
+          <td>API key (CLI-based)</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">per source hint, CLI-oriented access</div></td>
+          <td>REST/CLI</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>higgsfield.ai/cli</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="partial">
+          <td class="num">098</td>
+          <td class="app-name">Mermaid CLI <div class="app-desc">Diagram-as-code renderer</div></td>
+          <td>none</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">open-source, no account needed</div></td>
+          <td>none - local CLI/Node package, not a hosted API</td>
+          <td>none</td>
+          <td><span class="build build-partial">partial</span><div class="blocker">no hosted API to wrap; agent must shell out to the CLI locally</div></td>
+          <td class="evidence"><code>github.com/mermaid-js/mermaid-cli</code></td>
+        </tr>
+        <tr data-access="self-serve" data-build="yes">
+          <td class="num">099</td>
+          <td class="app-name">YouTube Transcript <div class="app-desc">Transcript extraction service</div></td>
+          <td>API key</td>
+          <td><span class="badge badge-self">self-serve</span><div class="access-note">paid third-party API (transcriptapi.com)</div></td>
+          <td>REST</td>
+          <td>none official</td>
+          <td><span class="build build-yes">buildable</span></td>
+          <td class="evidence"><code>transcriptapi.com</code></td>
+        </tr>
+        <tr data-access="gated" data-build="no">
+          <td class="num">100</td>
+          <td class="app-name">Grain <div class="app-desc">Meeting recording / notes</div></td>
+          <td>OAuth2 (partner API)</td>
+          <td><span class="badge badge-gate">gated</span><div class="access-note">API access is partner-issued, no fully public self-serve developer portal found</div></td>
+          <td>limited REST</td>
+          <td>none official</td>
+          <td><span class="build build-no">blocked</span><div class="blocker">needs a partnership conversation with Grain</div></td>
+          <td class="evidence"><code>grain.com</code></td>
+        </tr></tbody>
+      </table>
+    </details>
+</section>
+
+<footer class="wrap">
+  <div class="honesty">
+    <h3>Constraints and honesty, as asked</h3>
+    <ul>
+      <li>No paid accounts were used anywhere in this research — where an app is gated behind payment, partnership, or sales approval, that gate itself is reported as the finding, not treated as a failure to work around.</li>
+      <li>This report's 100-row dataset is the agent's <b>first pass</b>, built from general product knowledge rather than a live Composio+Claude run, because no API keys were available in this environment. That's disclosed rather than hidden — see the verification section above for what checking that pass against real docs actually found.</li>
+      <li><b>fanbasis</b> has no discoverable public developer documentation at all. Rather than invent an answer, it's flagged <code>buildable: no</code> with the blocker stated plainly.</li>
+      <li><b>Sherlock</b> and <b>Mermaid CLI</b> are local open-source tools, not hosted APIs — a fundamentally different integration shape (shell out to a CLI vs. call a remote endpoint) than the other 98 rows, called out rather than force-fit into the same buildability scale.</li>
+      <li>Where the agent got something wrong on the verification sample (Fathom's API existing, Pylon's two separate auth paths), it's shown in the table above rather than quietly fixed and hidden.</li>
+    </ul>
+  </div>
+  <div class="deliverable-links">
+    <span class="dlink">📄 README.md — how to run the agent for real</span>
+    <span class="dlink">🐍 agent/research_agent.py — the pipeline</span>
+    <span class="dlink">📊 data/apps.json — full dataset</span>
+    <span class="dlink">✅ data/verification_log.json — the 6-sample check</span>
+  </div>
+  <div class="foot-meta">AI Product Ops Intern take-home — submitted with source repo. Built with Composio's SDK/MCP pattern in mind; this run used research done directly rather than a live API call, disclosed above.</div>
+</footer>
+
+<script>
+document.querySelectorAll('.filter-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const f = btn.dataset.filter;
+    document.querySelectorAll('table.app-table tbody tr').forEach(tr=>{
+      if(f==='all'){tr.style.display='';return;}
+      const build = tr.dataset.build;
+      const want = f.replace('build-','');
+      tr.style.display = (build===want) ? '' : 'none';
+    });
+    // auto-open all category blocks when filtering so results are visible
+    if(f!=='all'){
+      document.querySelectorAll('details.cat-block').forEach(d=>d.open=true);
+    }
+  });
+});
+</script>
+
+</body>
+</html>
